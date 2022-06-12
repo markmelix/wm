@@ -93,36 +93,68 @@ pub mod bar {
 	use crate::result::Result;
 	use penrose::{
 		core::xconnection::XConn,
-		draw::{dwm_bar, Color, StatusBar, TextStyle},
+		draw::{
+			widget::{ActiveWindowName, Workspaces},
+			Color, HookableWidget, Position, StatusBar, TextStyle,
+		},
 		xcb::{XcbDraw, XcbDrawContext},
 	};
 
+	const POSITION: Position = Position::Top;
 	const FONT_NAME: &str = "Hack Nerd Font";
 	const TEXT_SIZE: i32 = 12;
-	const FOREGROUND_COLOR: &str = "#DDDDDD";
-	const BACKGROUND_COLOR: &str = "#000000";
-	const HIGHLIGHTED_WORKSPACE_COLOR: &str = "#4444CCAA";
-	const EMPTY_WORKSPACE_COLOR: &str = "#FFFFFF";
 
-	/// Make a new dwm-like [`status bar`][penrose::draw::bar::StatusBar]
+	/// Make a new [`status bar`][penrose::draw::bar::StatusBar]
 	pub fn make<X: XConn>() -> Result<StatusBar<XcbDrawContext, XcbDraw, X>> {
+		let draw = XcbDraw::new()?;
 		let height = crate::config::BAR_HEIGHT as usize;
+		let fonts = &[FONT_NAME];
+
+		let foreground_color = Color::try_from("#DDDDDD")?;
+		let background_color = Color::try_from("#000000")?;
+		let highlighted_workspace_color = Color::try_from("#4444CCAA")?;
+		let empty_workspace_color = Color::try_from("#FFFFFF")?;
+
+		let workspaces = crate::config::WORKSPACES
+			.iter()
+			.map(|w| w.to_string())
+			.collect::<Vec<_>>();
+
 		let style = TextStyle {
 			font: FONT_NAME.to_string(),
 			point_size: TEXT_SIZE,
-			fg: Color::try_from(FOREGROUND_COLOR)?,
-			bg: Some(Color::try_from(BACKGROUND_COLOR)?),
+			fg: foreground_color,
+			bg: Some(background_color),
 			padding: (2.0, 2.0),
 		};
-		let workspaces = crate::config::WORKSPACES.to_vec();
 
-		let bar = dwm_bar(
-			XcbDraw::new()?,
+		// ActiveWindowName widget settings
+		let awn_widget_char_limit = 80;
+		let awn_widget_is_greedy = true; // take all free space
+		let awn_widget_is_right_justified = false;
+
+		let widgets: Vec<Box<dyn HookableWidget<X>>> = vec![
+			Box::new(Workspaces::new(
+				&workspaces,
+				&style,
+				highlighted_workspace_color,
+				empty_workspace_color,
+			)),
+			Box::new(ActiveWindowName::new(
+				&style,
+				awn_widget_char_limit,
+				awn_widget_is_right_justified,
+				awn_widget_is_greedy,
+			)),
+		];
+
+		let bar = StatusBar::try_new(
+			draw,
+			POSITION,
 			height,
-			&style,
-			Color::try_from(HIGHLIGHTED_WORKSPACE_COLOR)?,
-			Color::try_from(EMPTY_WORKSPACE_COLOR)?,
-			workspaces,
+			background_color,
+			fonts,
+			widgets,
 		)?;
 
 		Ok(bar)
