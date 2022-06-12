@@ -45,7 +45,7 @@ pub mod config {
 	pub const GAP_SIZE: u32 = 5;
 
 	/// The percentage of the screen to grow the main region by when incrementing
-	pub const MAIN_RATIO_STEP: f32 = 0.;
+	pub const MAIN_RATIO_STEP: f32 = 0.1;
 
 	/// Whether or not space should be reserved for a status bar
 	pub const SHOW_BAR: bool = true;
