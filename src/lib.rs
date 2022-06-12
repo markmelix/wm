@@ -6,6 +6,9 @@ use result::Result;
 /// Default terminal emulator
 pub const TERMINAL: &str = "alacritty";
 
+/// Application launcher
+pub const APP_LAUNCHER: &str = "rofi -show drun";
+
 /// Run Window Manager.
 pub fn run() -> Result<()> {
 	use penrose::{
@@ -160,7 +163,7 @@ pub mod bindings {
 
 	/// Get key bindings
 	pub fn key<X: XConn>() -> KeyBindings<X> {
-		use crate::TERMINAL;
+		use crate::{APP_LAUNCHER, TERMINAL};
 
 		gen_keybindings! {
 			"M-j" => run_internal!(cycle_client, Forward);
@@ -175,7 +178,7 @@ pub mod bindings {
 			"M-A-Down" => run_internal!(update_max_main, Less);
 			"M-A-Right" => run_internal!(update_main_ratio, More);
 			"M-A-Left" => run_internal!(update_main_ratio, Less);
-			"M-semicolon" => run_external!("dmenu_run");
+			"M-semicolon" => run_external!(APP_LAUNCHER);
 			"M-Return" => run_external!(TERMINAL);
 			"M-A-Escape" => run_internal!(exit);
 
