@@ -8,15 +8,21 @@ pub const TERMINAL: &str = "alacritty";
 
 /// Run Window Manager.
 pub fn run() -> Result<()> {
-	use penrose::{logging_error_handler, xcb::new_xcb_backed_window_manager};
+	use penrose::{
+		core::hooks::Hooks, logging_error_handler,
+		xcb::new_xcb_backed_window_manager, XcbConnection,
+	};
 
 	let (key_bindings, mouse_bindings) = bindings::both();
 
 	let config = config::get()?;
-	let hooks = vec![];
 	let error_handler = logging_error_handler();
+	let bar = bar::make()?;
+	let hooks: Hooks<XcbConnection> = vec![Box::new(bar)];
 
 	let mut wm = new_xcb_backed_window_manager(config, hooks, error_handler)?;
+
+	spawn!(TERMINAL)?;
 
 	Ok(wm.grab_keys_and_run(key_bindings, mouse_bindings)?)
 }
@@ -37,7 +43,7 @@ pub mod config {
 	pub const FOCUSED_BORDER_COLOR: &str = "#FFFFFF";
 
 	/// Color of unfocused window border
-	pub const UNFOCUSED_BORDER_COLOR: &str = "#000000";
+	pub const UNFOCUSED_BORDER_COLOR: &str = "#777777";
 
 	/// Border width in pixels
 	pub const BORDER_WIDTH: u32 = 2;
@@ -76,6 +82,47 @@ pub mod config {
 			.build()?;
 
 		Ok(config)
+	}
+}
+
+/// Status bar
+pub mod bar {
+	use crate::result::Result;
+	use penrose::{
+		core::xconnection::XConn,
+		draw::{dwm_bar, Color, StatusBar, TextStyle},
+		xcb::{XcbDraw, XcbDrawContext},
+	};
+
+	const FONT_NAME: &str = "Hack Nerd Font";
+	const TEXT_SIZE: i32 = 12;
+	const FOREGROUND_COLOR: &str = "#DDDDDD";
+	const BACKGROUND_COLOR: &str = "#000000";
+	const HIGHLIGHTED_WORKSPACE_COLOR: &str = "#4444CCAA";
+	const EMPTY_WORKSPACE_COLOR: &str = "#FFFFFF";
+
+	/// Make a new dwm-like [`status bar`][penrose::draw::bar::StatusBar]
+	pub fn make<X: XConn>() -> Result<StatusBar<XcbDrawContext, XcbDraw, X>> {
+		let height = crate::config::BAR_HEIGHT as usize;
+		let style = TextStyle {
+			font: FONT_NAME.to_string(),
+			point_size: TEXT_SIZE,
+			fg: Color::try_from(FOREGROUND_COLOR)?,
+			bg: Some(Color::try_from(BACKGROUND_COLOR)?),
+			padding: (2.0, 2.0),
+		};
+		let workspaces = crate::config::WORKSPACES.to_vec();
+
+		let bar = dwm_bar(
+			XcbDraw::new()?,
+			height,
+			&style,
+			Color::try_from(HIGHLIGHTED_WORKSPACE_COLOR)?,
+			Color::try_from(EMPTY_WORKSPACE_COLOR)?,
+			workspaces,
+		)?;
+
+		Ok(bar)
 	}
 }
 
