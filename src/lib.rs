@@ -3,6 +3,9 @@ extern crate penrose;
 
 use result::Result;
 
+/// Default terminal emulator
+pub const TERMINAL: &str = "alacritty";
+
 /// Run Window Manager.
 pub fn run() -> Result<()> {
 	use penrose::{logging_error_handler, xcb::new_xcb_backed_window_manager};
@@ -18,12 +21,10 @@ pub fn run() -> Result<()> {
 	Ok(wm.grab_keys_and_run(key_bindings, mouse_bindings)?)
 }
 
+/// Everything related to high-level configurations
 pub mod config {
-	use crate::result::Result;
+	use crate::{layouts, result::Result};
 	use penrose::Config;
-
-	/// Default terminal emulator
-	pub const TERMINAL: &str = "alacritty";
 
 	/// Names of the workspaces
 	pub const WORKSPACES: [&str; 9] =
@@ -58,7 +59,7 @@ pub mod config {
 
 	/// Get [config][penrose::Config]
 	pub fn get() -> Result<Config> {
-		let layouts = crate::layouts();
+		let layouts = layouts::get();
 		let config = Config::default()
 			.builder()
 			.workspaces(WORKSPACES)
@@ -78,9 +79,27 @@ pub mod config {
 	}
 }
 
-/// Get used layout functions
-pub fn layouts() -> Vec<penrose::core::Layout> {
-	vec![]
+/// Everything related to layouts
+pub mod layouts {
+	use penrose::core::layout::{Layout, LayoutFunc};
+
+	const MAX_MAIN: u32 = 1;
+	const MAIN_RATIO: f32 = 0.5;
+
+	/// Get used layout functions
+	pub fn get() -> Vec<penrose::core::Layout> {
+		use penrose::core::layout::{bottom_stack, monocle, side_stack};
+
+		vec![
+			layout("[mono]", monocle),
+			layout("[side]", side_stack),
+			layout("[bottom]", bottom_stack),
+		]
+	}
+
+	fn layout(symbol: impl Into<String>, f: LayoutFunc) -> Layout {
+		Layout::new(symbol, Default::default(), f, MAX_MAIN, MAIN_RATIO)
+	}
 }
 
 /// Module containing functions to get key and mouse bindings to be used by
@@ -94,7 +113,7 @@ pub mod bindings {
 
 	/// Get key bindings
 	pub fn key<X: XConn>() -> KeyBindings<X> {
-		use crate::config::TERMINAL;
+		use crate::TERMINAL;
 
 		gen_keybindings! {
 			"M-j" => run_internal!(cycle_client, Forward);
