@@ -15,16 +15,13 @@ pub const STATUSBAR: Option<&str> =
 
 /// Run Window Manager.
 pub fn run() -> Result<()> {
-	use penrose::{
-		core::hooks::Hooks, logging_error_handler,
-		xcb::new_xcb_backed_window_manager, XcbConnection,
-	};
+	use penrose::{logging_error_handler, xcb::new_xcb_backed_window_manager};
 
 	let (key_bindings, mouse_bindings) = bindings::both();
 
 	let config = config::get()?;
 	let error_handler = logging_error_handler();
-	let mut hooks: Hooks<XcbConnection> = vec![];
+	let mut hooks = hooks::init();
 
 	if STATUSBAR.is_none() {
 		hooks.push(Box::new(bar::make()?));
@@ -178,6 +175,16 @@ pub mod bar {
 		)?;
 
 		Ok(bar)
+	}
+}
+
+/// Hooks for adding additional functionality around standard WindowManager
+/// actions. In other words, hooks describe what to do when something happends.
+pub mod hooks {
+	use penrose::{core::hooks::Hooks, XcbConnection};
+
+	pub fn init() -> Hooks<XcbConnection> {
+		vec![]
 	}
 }
 
