@@ -181,10 +181,23 @@ pub mod bar {
 /// Hooks for adding additional functionality around standard WindowManager
 /// actions. In other words, hooks describe what to do when something happends.
 pub mod hooks {
-	use penrose::{core::hooks::Hooks, XcbConnection};
+	use penrose::{
+		contrib::hooks::{ClientSpawnRules, SpawnRule},
+		core::hooks::Hooks,
+		XcbConnection,
+	};
 
 	pub fn init() -> Hooks<XcbConnection> {
-		vec![]
+		let client_spawn_rules = {
+			use SpawnRule::*;
+			vec![
+				ClassName("Alacritty", 0),
+				ClassName("Emacs", 1),
+				ClassName("Chromium", 2),
+			]
+		};
+
+		vec![ClientSpawnRules::new(client_spawn_rules)]
 	}
 }
 
