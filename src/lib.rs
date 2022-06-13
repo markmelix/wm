@@ -282,7 +282,7 @@ pub mod logger {
 	/// Initialize simple logger
 	pub fn init() -> Result<()> {
 		Ok(TermLogger::init(
-			LevelFilter::Trace,
+			LevelFilter::Info,
 			Default::default(),
 			Default::default(),
 			ColorChoice::Auto,
