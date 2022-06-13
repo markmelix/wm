@@ -63,8 +63,17 @@ pub mod config {
 	/// Whether or not the reserved space for a status bar is at the top of the sceen
 	pub const TOP_BAR: bool = true;
 
-	/// the height of the space to be reserved for a status bar in pixels
-	pub const BAR_HEIGHT: u32 = 15;
+	/// The height of the space to be reserved for a status bar in pixels.
+	///
+	/// To get polybar height we can use the following command:
+	///
+	/// ```bash
+	/// polybar --quiet --dump=height
+	/// ```
+	///
+	/// This will give us polybar height in points. Note that 1 point in most
+	/// cases equals 1 pixel.
+	pub const BAR_HEIGHT: u32 = 24;
 
 	/// Get [config][penrose::Config]
 	pub fn get() -> Result<Config> {
