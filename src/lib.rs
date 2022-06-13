@@ -48,7 +48,7 @@ pub mod config {
 		["term", "code", "web", "other", "5", "6", "7", "8", "9"];
 
 	/// Classes of the floating windows
-	pub const FLOATING_CLASSES: Vec<&str> = vec![];
+	pub const FLOATING_CLASSES: [&str; 0] = [];
 
 	/// Color of focused window border
 	pub const FOCUSED_BORDER_COLOR: &str = "#FFFFFF";
