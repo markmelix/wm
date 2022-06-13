@@ -9,6 +9,10 @@ pub const TERMINAL: &str = "alacritty";
 /// Application launcher
 pub const APP_LAUNCHER: &str = "rofi -show drun";
 
+/// Status bar implementation. If `None`, use own with [`bar::make`] function.
+pub const STATUSBAR: Option<&str> =
+	Some("/home/mark/.config/polybar/launch.sh");
+
 /// Run Window Manager.
 pub fn run() -> Result<()> {
 	use penrose::{
@@ -20,10 +24,17 @@ pub fn run() -> Result<()> {
 
 	let config = config::get()?;
 	let error_handler = logging_error_handler();
-	let bar = bar::make()?;
-	let hooks: Hooks<XcbConnection> = vec![Box::new(bar)];
+	let mut hooks: Hooks<XcbConnection> = vec![];
+
+	if STATUSBAR.is_none() {
+		hooks.push(Box::new(bar::make()?));
+	}
 
 	let mut wm = new_xcb_backed_window_manager(config, hooks, error_handler)?;
+
+	if STATUSBAR.is_some() {
+		spawn!(STATUSBAR.unwrap())?;
+	}
 
 	spawn!(TERMINAL)?;
 
@@ -71,9 +82,9 @@ pub mod config {
 	/// polybar --quiet --dump=height
 	/// ```
 	///
-	/// This will give us polybar height in points. Note that 1 point in most
-	/// cases equals 1 pixel.
-	pub const BAR_HEIGHT: u32 = 24;
+	/// This will give us polybar height in points. If it won't be enough, try
+	/// add 16 to the value from that command
+	pub const BAR_HEIGHT: u32 = 40;
 
 	/// Get [config][penrose::Config]
 	pub fn get() -> Result<Config> {
